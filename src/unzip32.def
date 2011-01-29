@@ -1,0 +1,12 @@
+EXPORTS
+     Wiz_SingleEntryUnzip@24
+     UzpVersion=UzpVersion@0
+     Wiz_Init@8
+     Wiz_SetOpts@8
+     Wiz_Unzip@20
+     Wiz_Validate@8
+     Wiz_NoPrinting@4
+     UzpVersion2=UzpVersion2@4
+     Wiz_UnzipToMemory@16
+     Wiz_Grep@24
+     UzpFreeMemBuffer=UzpFreeMemBuffer@4

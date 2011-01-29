@@ -1,0 +1,507 @@
+.. role:: funcdef(literal)
+
+lizip 0.2
+==========
+
+.. contents:: Table of Contents
+
+------------------------------------------------------------
+
+Introduction
+~~~~~~~~~~~~
+
+**lizip** is a Lua binding of Info-ZIP libraries *zip32z64.dll* and
+*unzip32.dll*. Currently, it works only on Windows platform.
+
+This version of lizip was tested and should work with versions 3.0 of *zip32z64*
+and 6.0 of *unzip32*.
+
+The library is loaded via ``require 'lizip'``. This will create two global
+tables: ``zip`` (binding of zip32z64.dll), and ``unzip`` (binding of
+unzip32.dll).
+
+------------------------------------------------------------
+
+zip namespace
+~~~~~~~~~~~~~~
+
+zip.init
+--------
+
+Sets user callback functions. These functions will be called during
+zip operations.
+
+:funcdef:`result = zip.init ([callbacks])`
+
+    *callbacks* - a table containing any or all of the following functions:
+        | ``print``, ``comment``, ``password`` and ``ServiceApplication``.
+        | If the table is not supplied, all callbacks are reset.
+
+    *result* - whether the operation was successful (boolean).
+
+If some of these functions are not present in the table, and the corresponding
+callbacks were set before the ``zip.init()`` call, they will be reset.
+
+The callback functions have the following signatures:
+    * ``size:number     = callbacks.print (message:string)``
+    * ``comment:string  = callbacks.comment (oldcomment:string)``
+    * ``password:string = callbacks.password (bufsize:number, mode:string, filename:string)``
+    * ``terminate:boolean = callbacks.ServiceApplication (filename:string, filesize:number)``
+
+
+zip.add, zip.delete, zip.freshen, zip.update
+--------------------------------------------
+
+As the parameters and the return values have the same meaning for
+these 4 functions, only ``zip.add`` is described below.
+
+:funcdef:`retnum, errstr = zip.add (zipname, files [, options])`
+
+    *zipname*
+        Name of the zip file.
+    *files*
+        An array of files to operate upon; every element of the array can be
+        either filename or wildcard mask; if there is only one filename/mask,
+        it can be passed directly, rather than as array element.
+    *options*
+        *Options table* (see `Options for zip`_) contains values of various
+        options keyed by their names. The options that are not specified by the
+        caller are set to nil/false/0 (except ``fLevel`` that has default value
+        of 6).
+    *retnum*
+        A number returned internally by ``ZpArchive()`` call.
+    *errstr*
+        A string describing the meaning of *retnum*.
+
+
+zip.version
+-----------
+
+:funcdef:`version = zip.version ()`
+
+    Returns a table containing the following fields:
+
+        ================   =======
+        ``is_beta``        boolean
+        ``uses_zlib``      boolean
+        ``fEncryption``    boolean
+        ``betalevel``      string
+        ``date``           string
+        ``zlib_version``   string
+        ``zip``            string
+        ``os2dll``         string
+        ``windll``         string
+        ================   =======
+
+zip.filetime
+-------------
+
+| Gets or sets file's last modification time. Time units are seconds.
+| (This function is included for testing purposes only).
+
+:funcdef:`result = zip.filetime (filename [, time])`
+
+    *filename*
+        Name of the file.
+    *time*
+        | Nothing/nil - for *get* operation.
+        | File time (number) - for *set* operation.
+    *result*
+        | File time (number), or nil - for *get* operation.
+        | Operation success (boolean) - for *set* operation.
+
+
+Options for zip
+----------------
+
+    +-----------------+------------+-------------------------------------------------+
+    | NAME            |    TYPE    | DESCRIPTION                                     |
+    +=================+============+=================================================+
+    | ``Date``        |    string  | Date to include after                           |
+    +-----------------+------------+-------------------------------------------------+
+    | ``szRootDir``   |    string  | Directory to use as base for zipping            |
+    +-----------------+------------+-------------------------------------------------+
+    | ``szTempDir``   |    string  | Temporary directory used during zipping         |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fTemp``       |    boolean | Use temporary directory '-b' during zipping     |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fSuffix``     |    boolean | include suffixes (not implemented)              |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fEncrypt``    |    boolean | encrypt files                                   |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fSystem``     |    boolean | include system and hidden files                 |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fVolume``     |    boolean | Include volume label                            |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fExtra``      |    boolean | Exclude extra attributes                        |
+    +-----------------+------------+-------------------------------------------------+
+    |``fNoDirEntries``|    boolean | Do not add directory entries                    |
+    +-----------------+------------+-------------------------------------------------+
+    |``fExcludeDate`` |    boolean | Exclude files newer than specified date         |
+    +-----------------+------------+-------------------------------------------------+
+    |``fIncludeDate`` |    boolean | Include only files newer than specified date    |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fVerbose``    |    boolean | Mention oddities in zip file structure          |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fQuiet``      |    boolean | Quiet operation                                 |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fCRLF_LF``    |    boolean | Translate CR/LF to LF                           |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fLF_CRLF``    |    boolean | Translate LF to CR/LF                           |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fJunkDir``    |    boolean | Junk directory names                            |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fGrow``       |    boolean | Allow appending to a zip file                   |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fForce``      |    boolean | Make entries using DOS names (k for Katz)       |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fMove``       |    boolean | Delete files added or updated in zip file       |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fJunkSFX``    |    boolean | Junk SFX prefix                                 |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fLatestTime`` |    boolean | Set zip file time to time of latest file in it  |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fComment``    |    boolean | Put comment in zip file                         |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fOffsets``    |    boolean | Update archive offsets for SFX files            |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fPrivilege``  |    boolean | Use privileges (WIN32 only)                     |
+    +-----------------+------------+-------------------------------------------------+
+    | ``szSplitSize`` |    string  | This string contains the size that you want to  |
+    |                 |            | split the archive into. i.e. 100 for 100 bytes, |
+    |                 |            | 2K for 2 k bytes, where K is 1024, m for meg    |
+    |                 |            | and g for gig. If this string is not NULL it    |
+    |                 |            | will automatically be assumed that you wish to  |
+    |                 |            | split an archive. The minimum supported split   |
+    |                 |            | size is 64K.                                    |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fRecurse``    |    integer | Recurse into subdirectories. 1 => -r, 2 => -R   |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fRepair``     |    integer | Repair archive. 1 => -F, 2 => -FF               |
+    +-----------------+------------+-------------------------------------------------+
+    | ``fLevel``      |    integer | Compression level (0 - 9)                       |
+    +-----------------+------------+-------------------------------------------------+
+
+
+------------------------------------------------------------
+
+unzip namespace
+~~~~~~~~~~~~~~~~
+
+unzip.init
+-------------------
+
+Sets user callback functions. These functions will be called during
+unzip operations.
+
+:funcdef:`unzip.init (callbacks)`
+
+    *callbacks* - a table containing any or all of the following functions:
+        | ``print``, ``sound``, ``replace``, ``password``,
+          ``SendApplicationMessage`` and ``ServCallBk``.
+        | If the table is not supplied, all callbacks are reset.
+
+If some of these function is not present in the table, and the corresponding
+callback was set before the ``unzip.init()`` call, it will be reset.
+
+The callback functions have the following signatures:
+    * ``size:number = callbacks.print (message:string)``
+    * ``callbacks.sound ()``
+    * ``decision:string [, newname:string] = callbacks.replace (filename:string, bufsize:number)``
+          (``decision`` can be either of: ``"no"``, ``"yes"``, ``"none"``,
+          ``"all"`` or ``"rename"``)
+    * ``password:string = callbacks.password (bufsize:number, prompt:string, filename:string)``
+    * ``result:boolean = callbacks.SendApplicationMessage (ucsize:number,
+      csiz:number, cfactor:number,
+      mo:number, dy:number, yr:number, hh:number, mm:number,
+      c:string, filename:string, methbuf:string, crc:number, fCrypt:string)``
+    * ``terminate:boolean = callbacks.ServCallBk (filename:string, filesize:number)``
+
+
+unzip.unzip
+-------------
+
+:funcdef:`retnum = unzip.unzip (zipname, [extractdir], [options], [iarray], [earray])`
+
+    *zipname*
+        Name of the zip file.
+    *extractdir*
+        Directory where the files will be extracted (``nil`` means the current
+        directory).
+    *options*
+        Can be either a string or a table. Use a string for most common
+        operations. Use a table when some rarely used options must be specified.
+
+        #. *Options string* contains some of the characters: **f** (freshen),
+           **u** (update), **o** (overwrite), **n** (never overwrite).
+           Usually, this string matches the Lua pattern ``"[fu]?[on]?"``.
+
+           The policy with regards to overwriting existing files is as follows.
+           If neither **n** nor **o** is specified, then ``replace`` callback
+           (see unzip.init_) is called if it's available. Otherwise, the
+           behavior is **n** (never overwrite).
+
+           Examples: ``""``, ``"o"``, ``"n"``, ``"f"``, ``"fo"``, ``"u"``,
+           ``"uo"``.
+
+        #. *Options table* (see `Options for unzip`_) contains values of
+           various options keyed by their names. The options that are not
+           specified by the caller are set to nil/false/0.
+
+    *iarray*
+        Array of filenames/wildcard masks to include.
+    *earray*
+        Array of filenames/wildcard masks to exclude.
+    *retnum*
+        A number returned internally by ``Wiz_SingleEntryUnzip()`` call.
+
+
+unzip.list, unzip.test
+-----------------------
+
+These 2 functions share a common description as they have near identical
+signatures.
+
+:funcdef:`retnum, summary = unzip.list (zipname, [iarray], [earray])`
+
+:funcdef:`retnum = unzip.test (zipname, [iarray], [earray])`
+
+    *zipname*
+        Name of the zip file.
+    *iarray*
+        Array of filenames/wildcard masks to include.
+    *earray*
+        Array of filenames/wildcard masks to exclude.
+    *retnum*
+        A number returned internally by ``Wiz_SingleEntryUnzip()`` call.
+    *summary*
+        A table containing statistics on the archive as a whole. It is returned
+        by ``unzip.list`` function, when *retnum* is 0. This table contains the
+        following fields:
+
+        =================    ======
+        ``TotalSizeComp``    number
+        ``TotalSize``        number
+        ``CompFactor``       number
+        ``NumMembers``       number
+        ``cchComment``       number
+        =================    ======
+
+
+unzip.unziptomemory
+-------------------
+
+:funcdef:`contents = unzip.unziptomemory (zipname, filename)`
+
+    *zipname*
+        Name of the zip file.
+    *filename*
+        Name of the file to extract.
+    *contents*
+        Contents of the extracted file (or ``nil`` if error occurred).
+
+
+unzip.validate
+-------------------
+
+:funcdef:`retnum = unzip.validate (zipname)`
+
+    *zipname*
+        Name of the zip file.
+    *retnum*
+        A number returned internally by ``Wiz_Validate()`` call.
+
+
+unzip.noprinting
+-------------------
+
+:funcdef:`unzip.noprinting (noprinting)`
+
+    *noprinting*
+        If true, turns the printing off.
+
+
+unzip.version
+-------------------
+
+:funcdef:`version = unzip.version ()`
+
+    Returns a table containing the following fields:
+
+        ================     =======
+        ``is_beta``          boolean
+        ``uses_zlib``        boolean
+        ``betalevel``        string
+        ``date``             string
+        ``zlib_version``     string
+        ``unzip``            string
+        ``os2dll``           string
+        ``windll``           string
+        ================     =======
+
+unzip.filetime
+---------------
+
+Same as zip.filetime_.
+
+
+Options for unzip
+------------------
+
+    +-----------------------+-----------+------------------------------------------------------+
+    | NAME                  | TYPE      | DESCRIPTION                                          |
+    +=======================+===========+======================================================+
+    | ``ExtractOnlyNewer``  | boolean   | TRUE for "update" without interaction                |
+    |                       |           | (extract only newer/new files, without queries)      |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``SpaceToUnderscore`` | boolean   | TRUE if convert space to underscore                  |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``PromptToOverwrite`` | boolean   | TRUE if prompt to overwrite is wanted                |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``fQuiet``            | integer   | quiet flag:                                          |
+    |                       |           | { 0 = all | 1 = few | 2 = no } messages              |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``ncflag``            | boolean   | write to stdout if TRUE                              |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``nfflag``            | boolean   | "freshen" (replace existing files by newer versions) |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``nzflag``            | boolean   | display zip file comment                             |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``ndflag``            | integer   | | controls (sub)dir recreation during extraction     |
+    |                       |           | | 0 = junk paths from filenames                      |
+    |                       |           | | 1 = "safe" usage of paths in filenames (skip ../)  |
+    |                       |           | | 2 = allow unsafe path components (dir traversal)   |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``noflag``            | boolean   | always overwriting existing files if TRUE            |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``naflag``            | boolean   | do end-of-line translation                           |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``nZIflag``           | boolean   | get ZipInfo output if TRUE                           |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``B_flag``            | boolean   | backup existing files if TRUE                        |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``C_flag``            | boolean   | be case insensitive if TRUE                          |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``D_flag``            | integer   | | controls restoration of timestamps                 |
+    |                       |           | | 0 = restore all timestamps (default)               |
+    |                       |           | | 1 = skip restoration of timestamps for folders     |
+    |                       |           | | created on behalf of directory entries in the      |
+    |                       |           |   Zip archive                                        |
+    |                       |           | | 2 = no restoration of timestamps  extracted files  |
+    |                       |           |   and dirs get stamped with current time             |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``U_flag``            | integer   | | controls UTF-8 filename coding support             |
+    |                       |           | | 0 = automatic UTF-8 translation enabled (default)  |
+    |                       |           | | 1 = recognize UTF-8 coded names, but all non-ASCII |
+    |                       |           |     characters are "escaped" into "#Uxxxx"           |
+    |                       |           | | 2 = UTF-8 support is disabled, filename handling   |
+    |                       |           |       works exactly as in previous UnZip versions    |
+    +-----------------------+-----------+------------------------------------------------------+
+    | ``fPrivilege``        | integer   | | 1 => restore ACLs in user mode,                    |
+    |                       |           | | 2 => try to use privileges for restoring ACLs      |
+    +-----------------------+-----------+------------------------------------------------------+
+
+------------------------------------------------------------
+
+Incompatibilities with the previous version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Requires v3.0 of *zip32z64.dll* and v6.0 of *unzip32.dll*
+#. Removed functions: ``zip.getoptions``, ``zip.setoptions`` and
+   ``zip.resetoptions``.
+#. Removed function: ``zip.changefiletime``. Use zip.filetime_ instead.
+#. Function unzip.init_: signature of ``callbacks.replace`` changed.
+
+------------------------------------------------------------
+
+lizip license
+~~~~~~~~~~~~~~
+
+lizip is licensed under the terms of the MIT license reproduced below.
+
+Copyright (C) 2009 Shmuel Zeigerman
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+------------------------------------------------------------
+
+Info-ZIP license
+~~~~~~~~~~~~~~~~~~
+
+| This is version 2007-Mar-4 of the Info-ZIP license.
+| The definitive version of this document should be available at
+| ftp://ftp.info-zip.org/pub/infozip/license.html indefinitely and
+| a copy at http://www.info-zip.org/pub/infozip/license.html.
+
+
+Copyright (c) 1990-2007 Info-ZIP.  All rights reserved.
+
+For the purposes of this copyright and license, "Info-ZIP" is defined as
+the following set of individuals:
+
+   Mark Adler, John Bush, Karl Davis, Harald Denker, Jean-Michel Dubois,
+   Jean-loup Gailly, Hunter Goatley, Ed Gordon, Ian Gorman, Chris Herborth,
+   Dirk Haase, Greg Hartwig, Robert Heath, Jonathan Hudson, Paul Kienitz,
+   David Kirschbaum, Johnny Lee, Onno van der Linden, Igor Mandrichenko,
+   Steve P. Miller, Sergio Monesi, Keith Owens, George Petrov, Greg Roelofs,
+   Kai Uwe Rommel, Steve Salisbury, Dave Smith, Steven M. Schweda,
+   Christian Spieler, Cosmin Truta, Antoine Verheijen, Paul von Behren,
+   Rich Wales, Mike White.
+
+This software is provided "as is," without warranty of any kind, express
+or implied.  In no event shall Info-ZIP or its contributors be held liable
+for any direct, indirect, incidental, special or consequential damages
+arising out of the use of or inability to use this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the above disclaimer and the following restrictions:
+
+    1. Redistributions of source code (in whole or in part) must retain
+       the above copyright notice, definition, disclaimer, and this list
+       of conditions.
+
+    2. Redistributions in binary form (compiled executables and libraries)
+       must reproduce the above copyright notice, definition, disclaimer,
+       and this list of conditions in documentation and/or other materials
+       provided with the distribution.  The sole exception to this condition
+       is redistribution of a standard UnZipSFX binary (including SFXWiz) as
+       part of a self-extracting archive; that is permitted without inclusion
+       of this license, as long as the normal SFX banner has not been removed
+       from the binary or disabled.
+
+    3. Altered versions--including, but not limited to, ports to new operating
+       systems, existing ports with new graphical interfaces, versions with
+       modified or added functionality, and dynamic, shared, or static library
+       versions not from Info-ZIP--must be plainly marked as such and must not
+       be misrepresented as being the original source or, if binaries,
+       compiled from the original source.  Such altered versions also must not
+       be misrepresented as being Info-ZIP releases--including, but not
+       limited to, labeling of the altered versions with the names "Info-ZIP"
+       (or any variation thereof, including, but not limited to, different
+       capitalizations), "Pocket UnZip," "WiZ" or "MacZip" without the
+       explicit permission of Info-ZIP.  Such altered versions are further
+       prohibited from misrepresentative use of the Zip-Bugs or Info-ZIP
+       e-mail addresses or the Info-ZIP URL(s), such as to imply Info-ZIP
+       will provide support for the altered versions.
+
+    4. Info-ZIP retains the right to use the names "Info-ZIP," "Zip," "UnZip,"
+       "UnZipSFX," "WiZ," "Pocket UnZip," "Pocket Zip," and "MacZip" for its
+       own source and binary releases.
+

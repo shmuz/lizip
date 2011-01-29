@@ -1,0 +1,8 @@
+2009-06-25  Release 0.2
+  * The latest Info-ZIP DLLs (zip32z64 v3.0 and unzip32 v6.0) are supported
+    and required.
+
+2009-06-18  Release 0.1  
+  * First public release.
+  * The following DLLs are supported: zip32 v2.32 and unzip32 v5.52.
+
