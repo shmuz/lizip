@@ -42,7 +42,7 @@ void optfunction (lua_State *L, int pos, const char* key) {
   lua_getfield(L, pos, key);
   if (!lua_isfunction(L,-1))
     checkfornil(L, key);
-  lua_setfield(L, LUA_ENVIRONINDEX, key);
+  lua_setfield(L, ALG_ENVIRONINDEX, key);
 }
 
 
@@ -57,7 +57,7 @@ void create_argarray (lua_State *L, int pos, int *argc, char ***argv) {
   if (pos < 0)
     pos += lua_gettop(L) + 1;
   luaL_checktype(L, pos, LUA_TTABLE);
-  *argc = lua_objlen(L, pos);
+  *argc = lua_rawlen(L, pos);
   *argv = (char**) lua_newuserdata(L, (*argc+1) * sizeof(char*));
   lua_createtable(L, *argc, 0);
   for (i=0; i<*argc; i++, lua_pop(L,1)) {
@@ -111,7 +111,7 @@ int callback_password (lua_State *L, LPSTR pwbuf, int bufsize, LPCSTR param,
   LPCSTR filename)
 {
   int status = IZ_PW_ERROR;
-  lua_getfield(L, LUA_ENVIRONINDEX, "password");
+  lua_getfield(L, ALG_ENVIRONINDEX, "password");
   if (!lua_isfunction(L,-1))
     status = IZ_PW_CANCELALL;
   else {
@@ -121,8 +121,8 @@ int callback_password (lua_State *L, LPSTR pwbuf, int bufsize, LPCSTR param,
     if (0 == lua_pcall(L, 3, 1, 0)) {
       if (lua_isstring(L,-1)) {
         const char *str = lua_tostring(L,-1);
-        int objlen = lua_objlen(L,-1);
-        if (objlen < bufsize && objlen == strlen(str)) {
+        size_t len = lua_rawlen(L,-1);
+        if (len < (size_t)bufsize && len == strlen(str)) {
           strcpy(pwbuf, str);
           status = IZ_PW_ENTERED;
         }
@@ -139,7 +139,7 @@ int callback_password (lua_State *L, LPSTR pwbuf, int bufsize, LPCSTR param,
 int callback_print (lua_State *L, char *buf, unsigned long size)
 {
   int ret = (unsigned int) size;
-  lua_getfield(L, LUA_ENVIRONINDEX, "print");
+  lua_getfield(L, ALG_ENVIRONINDEX, "print");
   if (lua_isfunction(L, -1)) {
     lua_pushlstring(L, buf, size);
     if (0 == lua_pcall(L, 1, 1, 0)) {
@@ -202,3 +202,10 @@ int f_filetime (lua_State *L) {
   return 1;
 }
 
+#if LUA_VERSION_NUM > 501
+int luaL_typerror (lua_State *L, int narg, const char *tname) {
+  const char *msg = lua_pushfstring(L, "%s expected, got %s",
+                                    tname, luaL_typename(L, narg));
+  return luaL_argerror(L, narg, msg);
+}
+#endif

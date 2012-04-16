@@ -4,6 +4,14 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#if LUA_VERSION_NUM < 502
+  #define lua_rawlen lua_objlen
+  #define ALG_ENVIRONINDEX LUA_ENVIRONINDEX
+#else
+  int luaL_typerror (lua_State *L, int narg, const char *tname);
+  #define ALG_ENVIRONINDEX lua_upvalueindex(1)
+#endif
+
 void optinteger  (lua_State *L, int pos, const char* key, int *trg);
 void optstring   (lua_State *L, int pos, const char* key, const char **trg);
 void optboolean  (lua_State *L, int pos, const char* key, int *trg);
@@ -20,4 +28,3 @@ int  callback_print    (lua_State *L, char *buf, unsigned long size);
 int  f_filetime        (lua_State *L);
 
 #endif
-

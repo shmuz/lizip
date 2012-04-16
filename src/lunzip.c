@@ -33,10 +33,11 @@ static int WINAPI CallbackPrint (LPSTR buf, unsigned long size)
 
 static void WINAPI CallbackSound ()
 {
-  lua_getfield(GL, LUA_ENVIRONINDEX, "sound");
+  lua_getfield(GL, ALG_ENVIRONINDEX, "sound");
   if (lua_isfunction(GL, -1)) {
-    if (0 == lua_pcall(GL, 0, 0, 0))
-      ;
+    if (0 == lua_pcall(GL, 0, 0, 0)) {
+      /* */
+    }
   }
   lua_pop(GL,1);
 }
@@ -47,7 +48,7 @@ static int WINAPI CallbackReplace (LPSTR efnam, unsigned efbufsiz) {
      files.
    */
   int ret = IDM_REPLACE_NO;
-  lua_getfield(GL, LUA_ENVIRONINDEX, "replace");
+  lua_getfield(GL, ALG_ENVIRONINDEX, "replace");
   if (lua_isfunction(GL, -1)) {
     lua_pushstring(GL, efnam);
     lua_pushinteger(GL, efbufsiz);
@@ -82,7 +83,7 @@ static void WINAPI CallbackSendApplicationMessage (
     unsigned mo, unsigned dy, unsigned yr, unsigned hh, unsigned mm,
     char c, LPCSTR filename, LPCSTR methbuf, unsigned long crc, char fCrypt)
 {
-  lua_getfield(GL, LUA_ENVIRONINDEX, "SendApplicationMessage");
+  lua_getfield(GL, ALG_ENVIRONINDEX, "SendApplicationMessage");
   if (lua_isfunction(GL, -1)) {
     lua_pushnumber(GL, ucsize);
     lua_pushnumber(GL, csiz);
@@ -97,8 +98,9 @@ static void WINAPI CallbackSendApplicationMessage (
     lua_pushstring(GL, methbuf);
     lua_pushnumber(GL, crc);
     lua_pushlstring(GL, &fCrypt, 1);
-    if (0 == lua_pcall(GL, 13, 0, 0))
-      ;
+    if (0 == lua_pcall(GL, 13, 0, 0)) {
+      /* */
+    }
   }
   lua_pop(GL,1);
 }
@@ -107,7 +109,7 @@ static void WINAPI CallbackSendApplicationMessage (
 static int WINAPI CallbackServCallBk (const char* filename, z_uint8 size)
 {
   int ret = 0;
-  lua_getfield(GL, LUA_ENVIRONINDEX, "ServCallBk");
+  lua_getfield(GL, ALG_ENVIRONINDEX, "ServCallBk");
   if (lua_isfunction(GL, -1)) {
     lua_pushstring(GL, filename);
     lua_pushnumber(GL, size);
@@ -328,7 +330,7 @@ static int f_init (lua_State *L) {
 }
 
 
-static const luaL_reg lib[] = {
+static const luaL_Reg lib[] = {
   {"version",       f_version},
   {"init",          f_init},
   {"unzip",         f_unzip},
@@ -343,8 +345,15 @@ static const luaL_reg lib[] = {
 
 
 int luaopen_lunzip (lua_State *L) {
+#if LUA_VERSION_NUM == 501
   lua_newtable(L);
   lua_replace(L, LUA_ENVIRONINDEX); /* used in callbacks */
   luaL_register(L, "unzip", lib);
+#else
+  lua_newtable(L);
+  lua_newtable(L);
+  luaL_setfuncs(L, lib, 1);
+  lua_setglobal(L, "unzip");
+#endif
   return 0;
 }

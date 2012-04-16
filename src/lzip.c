@@ -39,7 +39,7 @@ static int WINAPI CallbackPrint(char *buf, unsigned long size)
 static int WINAPI CallbackComment (char *szBuf)
 {
   szBuf[0] = '\0';
-  lua_getfield(GL, LUA_ENVIRONINDEX, "comment");
+  lua_getfield(GL, ALG_ENVIRONINDEX, "comment");
   if (lua_isfunction(GL, -1)) {
     lua_pushstring(GL, szBuf);
     if (0 == lua_pcall(GL, 1, 1, 0)) {
@@ -58,7 +58,7 @@ static int WINAPI CallbackServiceApplication
     (LPCSTR name, unsigned __int64 size)
 {
   int ret = 0;
-  lua_getfield(GL, LUA_ENVIRONINDEX, "ServiceApplication");
+  lua_getfield(GL, ALG_ENVIRONINDEX, "ServiceApplication");
   if (lua_isfunction(GL, -1)) {
     lua_pushstring(GL, name);
     lua_pushnumber(GL, size);
@@ -223,7 +223,7 @@ static int f_freshen (lua_State *L)  { return archive(L, 'f'); }
 static int f_delete  (lua_State *L)  { return archive(L, 'd'); }
 
 
-static const luaL_reg lib[] = {
+static const luaL_Reg lib[] = {
   {"init",         f_init},
   {"version",      f_version},
 
@@ -241,12 +241,16 @@ static const luaL_reg lib[] = {
 int luaopen_lizip (lua_State *L)
 {
   ZpInit(&ZipUserFunctions); /* prevents crash */
-
+#if LUA_VERSION_NUM == 501
   lua_newtable(L);
   lua_replace(L, LUA_ENVIRONINDEX); /* used in callbacks */
   luaL_register(L, "zip", lib);
-
+#else
+  lua_newtable(L);
+  lua_newtable(L);
+  luaL_setfuncs(L, lib, 1);
+  lua_setglobal(L, "zip");
+#endif
   luaopen_lunzip(L);
-
   return 0;
 }

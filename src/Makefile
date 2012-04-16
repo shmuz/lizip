@@ -2,11 +2,12 @@
 
 PROJECT = lizip
 OBJ = lzip.o lunzip.o common.o
-MYCFLAGS = -O2 -Wall -DAPI -DUTIL -I$(PATH_INFOZIP)
+MYCFLAGS = -DAPI -DUTIL
+MYINCS = -I$(PATH_INFOZIP)
 MYLIBS = zip32z64.a unzip32.a
 lzip.o: MYCFLAGS += -DGLOBALS
 
-$(PROJECT).dll : $(OBJ) $(MYLIBS)
+$(PROJECT).dll : $(MYLIBS)
 
 zip32z64.a : zip32z64.def
 	dlltool --dllname zip32z64.dll --def $< --output-lib $@ -k
