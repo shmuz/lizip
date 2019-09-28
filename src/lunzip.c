@@ -3,7 +3,10 @@
   written by : Shmuel Zeigerman
 */
 
+#if defined (_WIN32)
 #include <windows.h>
+#endif
+
 #include <unzip/windll/structs.h>
 #include <unzip/windll/decs.h>
 #include "common.h"

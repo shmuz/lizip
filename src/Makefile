@@ -2,7 +2,7 @@
 
 PROJECT = lizip
 OBJ = lzip.o lunzip.o common.o
-MYCFLAGS = -DAPI -DUTIL
+MYCFLAGS = -DWINDLL
 MYINCS = -I$(PATH_INFOZIP)
 MYLIBS = zip32z64.a unzip32.a
 lzip.o: MYCFLAGS += -DGLOBALS

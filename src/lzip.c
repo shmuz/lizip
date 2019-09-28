@@ -3,6 +3,10 @@
   written by : Shmuel Zeigerman
 */
 
+#if defined (_WIN32)
+#include <windows.h>
+#endif
+
 #include <zip/windll/structs.h>
 #include "common.h"
 
@@ -72,7 +76,7 @@ static int WINAPI CallbackServiceApplication
 
 static ZIPUSERFUNCTIONS ZipUserFunctions = {
   CallbackPrint, CallbackComment, CallbackPassword, NULL,
-  CallbackServiceApplication
+  CallbackServiceApplication, NULL
 };
 
 
